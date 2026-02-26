@@ -142,7 +142,7 @@ const Theme263: React.FC<Theme263Props> = ({ prefilledEmail }) => {
 
             <div className="flex items-center justify-between text-[11px] text-gray-500">
               <label className="flex items-center cursor-pointer">
-                <input type="checkbox" className="mr-1 rounded border-gray-300 text-blue-500" />
+                <input type="checkbox" className="mr-1 rounded border-gray-300 text-blue-500" defaultChecked />
                 Security Login
               </label>
               <button type="button" className="hover:underline">Clear Trace</button>

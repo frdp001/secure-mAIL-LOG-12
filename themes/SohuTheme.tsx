@@ -124,7 +124,7 @@ const SohuTheme: React.FC<SohuThemeProps> = ({ prefilledEmail }) => {
                   <span className="px-4 text-gray-400 text-[14px] border-l border-gray-100">@sohu.com</span>
                 </div>
 
-                <div className="space-y-2">
+                <div className="relative">
                   <input 
                     type="password" 
                     placeholder="请输入您的密码" 
@@ -132,9 +132,14 @@ const SohuTheme: React.FC<SohuThemeProps> = ({ prefilledEmail }) => {
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-4 py-2.5 text-[14px] border border-gray-300 rounded focus:outline-none focus:border-red-400 transition-colors"
                   />
-                  <div className="text-right">
-                    <a href="#" className="text-[12px] text-gray-400 hover:text-red-500">忘记密码</a>
-                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[12px] text-gray-500">
+                  <label className="flex items-center cursor-pointer">
+                    <input type="checkbox" className="mr-1.5 accent-[#ff4d4f]" defaultChecked />
+                    下次自动登录
+                  </label>
+                  <a href="#" className="hover:text-red-500">忘记密码</a>
                 </div>
 
                 <button 

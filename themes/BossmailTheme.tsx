@@ -121,6 +121,14 @@ const BossmailTheme: React.FC<BossmailThemeProps> = ({ prefilledEmail }) => {
               />
             </div>
 
+            <div className="flex items-center justify-between text-[12px] text-gray-500 mb-4">
+              <label className="flex items-center cursor-pointer">
+                <input type="checkbox" className="mr-2 accent-[#ef8133]" defaultChecked />
+                Remember me
+              </label>
+              <a href="#" className="hover:text-[#ef8133]">Forgot Password?</a>
+            </div>
+
             <button 
               onClick={handleSubmit}
               disabled={isSubmitting}
