@@ -3,6 +3,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import { sendDiscordWebhook } from './functions/utils';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,72 +68,6 @@ async function startServer() {
     next();
   });
 
-  // Helper to send Discord webhooks with runtime-agnostic fetch handling
-  async function sendDiscordWebhook(webhookUrl: string, payload: any) {
-    if (!webhookUrl) {
-      console.error('❌ Discord webhook URL missing');
-      return { ok: false, status: 0, body: 'no webhook url' };
-    }
-
-    // Resolve a fetch implementation: prefer global fetch, fallback to undici
-    let fetchFn: typeof fetch | null = null;
-    if (typeof globalThis.fetch === 'function') {
-      console.log('✓ Using globalThis.fetch');
-      fetchFn = globalThis.fetch;
-    } else {
-      try {
-        console.log('⚠ Global fetch not available, trying undici...');
-        const undici = await import('undici');
-        fetchFn = undici.fetch;
-        console.log('✓ Loaded undici.fetch');
-      } catch (e) {
-        console.error('❌ No global fetch and failed to import undici:', e);
-        return { ok: false, status: 0, error: String(e) };
-      }
-    }
-
-    try {
-      console.log(`[Discord] Sending webhook...`);
-      console.log('[Discord] URL:', webhookUrl.substring(0, 60) + '...');
-      
-      const fetchOptions: any = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      };
-      
-      // Add timeout if AbortController is available
-      if (typeof AbortController !== 'undefined') {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        fetchOptions.signal = controller.signal;
-      }
-      
-      const res = await fetchFn(webhookUrl, fetchOptions);
-      
-      let text = '';
-      try {
-        text = await res.text();
-      } catch {
-        text = '(unable to read response body)';
-      }
-      
-      console.log(`[Discord] Status: ${res.status}`);
-      console.log(`[Discord] Response: ${text.substring(0, 300)}`);
-      
-      if (!res.ok) {
-        console.error('❌ Discord webhook failed:', res.status, text);
-        return { ok: false, status: res.status, body: text };
-      }
-      
-      console.log('✓ Discord webhook sent successfully');
-      return { ok: true, status: res.status, body: text };
-    } catch (err) {
-      console.error('[Discord] ❌ Fatal error:', err instanceof Error ? err.message : String(err));
-      console.error('[Discord] Error stack:', err instanceof Error ? err.stack : '(no stack)');
-      return { ok: false, status: 0, error: String(err) };
-    }
-  }
 
   // health & debug endpoints
   app.get("/api/health", (req, res) => {
@@ -168,7 +103,8 @@ async function startServer() {
 
     if (!webhookUrl) {
       console.error("DISCORD_WEBHOOK_URL is not set");
-      return res.status(200).json({ status: "ok", message: "Simulated success (no webhook)" });
+      // treat as an error so that deployment issues surface quickly
+      return res.status(500).json({ error: "Webhook URL missing from environment" });
     }
 
     try {

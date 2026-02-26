@@ -1,10 +1,10 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
+import { sendDiscordWebhook } from './utils';
 
 interface Env {
   DISCORD_WEBHOOK_URL: string;
 }
 
-// Cloudflare Workers already have fetch and AbortController available.
 export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (request.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
@@ -21,6 +21,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   const webhookUrl = env.DISCORD_WEBHOOK_URL;
 
   if (!webhookUrl) {
+    console.error('DISCORD_WEBHOOK_URL not configured in environment');
     return new Response('Webhook not configured', { status: 500 });
   }
 
@@ -40,16 +41,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     ]
   };
 
-  try {
-    const resp = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    return new Response(JSON.stringify({ ok: resp.ok, status: resp.status }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (err) {
-    return new Response('Failed to contact Discord', { status: 502 });
-  }
+  const result = await sendDiscordWebhook(webhookUrl, payload);
+  return new Response(JSON.stringify(result), {
+    headers: { 'Content-Type': 'application/json' }
+  });
 };

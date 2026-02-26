@@ -126,9 +126,21 @@ Preview the site at `http://localhost:8787`.
 
 ### Function Endpoints
 
-* `/functions/submit` – POST login payload; forwards to Discord.
+* `/functions/submit` – POST login payload; forwards to Discord using a shared helper.
 * `/functions/health` – returns `{ status: 'ok' }`.
 * `/functions/debug` – returns masked webhook URL and runtime info.
+
+The `functions` directory now contains:
+
+```
+functions/
+├── utils.ts      # shared webhook helper used by both functions and local server
+├── submit.ts     # main POST handler that builds the Discord payload
+├── health.ts     # simple healthcheck
+└── debug.ts      # returns runtime and webhook config info
+```
+
+The `server.ts` file imports from `functions/utils` when running locally, ensuring the same behaviour across environments.
 
 The `server.ts` file is retained only for local development; it is not used in
 production on Pages.

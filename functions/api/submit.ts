@@ -17,7 +17,8 @@ export const onRequest: PagesFunction = async ({ request, env }) => {
   const webhookUrl = env.DISCORD_WEBHOOK_URL;
 
   if (!webhookUrl) {
-    console.error('DISCORD_WEBHOOK_URL not configured');
+    console.error('DISCORD_WEBHOOK_URL not configured in environment');
+    // make failure obvious to clients
     return new Response('Webhook not configured', { status: 500 });
   }
 

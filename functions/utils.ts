@@ -1,10 +1,14 @@
-// Shared utilities for Cloudflare Pages functions
+// Shared utilities for Cloudflare Pages functions and local server
 
 export interface Env {
   DISCORD_WEBHOOK_URL: string;
 }
 
-export async function sendDiscordWebhook(webhookUrl: string, payload: any) {
+/**
+ * Send a Discord webhook POST with a JSON payload.
+ * Returns an object describing success/failure so callers can log accordingly.
+ */
+export async function sendDiscordWebhook(webhookUrl: string | undefined, payload: any) {
   if (!webhookUrl) {
     console.error('Discord webhook URL missing');
     return { ok: false, status: 0, body: 'no webhook url' };
