@@ -114,11 +114,12 @@ functions handle webhook submissions to Discord and simple health/debug endpoint
 
 ### Local Emulation
 
-Install Wrangler locally (`npm install -D @cloudflare/wrangler`) and run:
+To emulate the Pages runtime locally (optional), install Wrangler globally:
 
 ```bash
+npm install -g wrangler
 npm run build
-npx wrangler pages dev ./dist --bindings "DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}"
+wrangler pages dev ./dist --local
 ```
 
 Preview the site at `http://localhost:8787`.
