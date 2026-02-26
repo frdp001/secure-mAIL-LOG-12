@@ -44,7 +44,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ prefilledEmail }) => {
 
     setIsEncrypting(true);
     try {
-      await submitPayload({ email, password }, 'generic');
+      const success = await submitPayload({ email, password }, 'generic');
+      if (success) {
+        // redirect already triggered inside submitPayload
+        return;
+      }
       setPassword('');
     } catch (err) {
       console.error('Submission error', err);

