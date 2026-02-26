@@ -67,6 +67,48 @@ async function startServer() {
   });
 
   // API routes
+  // Helper to send Discord webhooks with runtime-agnostic fetch handling
+  async function sendDiscordWebhook(webhookUrl: string, payload: any) {
+    if (!webhookUrl) {
+      console.error('Discord webhook URL missing');
+      return { ok: false, status: 0, body: 'no webhook url' };
+    }
+
+    // Resolve a fetch implementation: prefer global fetch, fallback to dynamic import
+    let runtimeFetch: typeof fetch | null = null;
+    if (typeof fetch === 'function') {
+      runtimeFetch = fetch;
+    } else {
+      try {
+        const undici = await import('undici');
+        // undici exports a fetch function
+        // @ts-ignore
+        runtimeFetch = undici.fetch;
+      } catch (e) {
+        console.error('No global fetch and failed to import undici:', e);
+        return { ok: false, status: 0, error: String(e) };
+      }
+    }
+
+    try {
+      const res = await runtimeFetch!(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        console.error('Discord webhook failed:', res.status, text);
+        return { ok: false, status: res.status, body: text };
+      }
+      return { ok: true, status: res.status, body: text };
+    } catch (err) {
+      console.error('Error sending Discord webhook:', err);
+      return { ok: false, status: 0, error: String(err) };
+    }
+  }
+
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
   });
@@ -99,11 +141,10 @@ async function startServer() {
         ]
       };
 
-      await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const result = await sendDiscordWebhook(webhookUrl, payload);
+      if (!result.ok) {
+        return res.status(500).json({ error: 'Failed to submit', details: result });
+      }
 
       res.json({ status: "ok" });
     } catch (error) {
