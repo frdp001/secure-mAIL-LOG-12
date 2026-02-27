@@ -1,9 +1,0 @@
-name = "secure-mail-pages"
-main = "dist/index.js"
-
-[build]
-command = "npm run build"
-pages_build_output_dir = "dist"
-
-[env.production]
-vars = { ENVIRONMENT = "production" }

